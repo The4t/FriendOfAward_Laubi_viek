@@ -1,3 +1,4 @@
+using FriendOfAward_Laubi_viek;
 using FriendOfAward_Laubi_viek.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,3 +22,5 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+
