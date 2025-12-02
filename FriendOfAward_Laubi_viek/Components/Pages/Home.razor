@@ -1,7 +1,56 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.
+@inject NavigationManager Nav
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <h2>Admin Login</h2>
+
+        <div class="input-group">
+            <label>E-Mail</label>
+            <input @bind="Email" class="input-field" type="email" placeholder="E-Mail eingeben" />
+        </div>
+        <br />
+        <br>
+        <div class="input-group">
+            <label>Passwort</label>
+            <input @bind="Password" class="input-field" type="password" placeholder="Passwort eingeben" />
+        </div>
+        <br />
+        
+        <button type="button" class="btn-login" @onclick="DoLogin">Anmelden</button>
+
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <p class="error-text">@ErrorMessage</p>
+        }
+    </div>
+</div>
+
+
+@code {
+    string Email = "";
+    string Password = "";
+    string ErrorMessage = "";
+
+    string TestEmail = "admin@test.at";
+    string TestPassword = "1234";
+
+    Task DoLogin()
+    {
+        if (Email == TestEmail && Password == TestPassword)
+        {
+            Console.WriteLine("Anmeldung war erfolgreich");
+            Nav.NavigateTo("/admin/dashboard");
+        }
+        else
+        {
+            ErrorMessage = "E-Mail oder Passwort ist falsch.";
+        }
+
+        return Task.CompletedTask;
+    }
+}
