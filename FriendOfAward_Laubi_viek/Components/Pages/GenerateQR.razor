@@ -1,0 +1,38 @@
+﻿@page "/showqr"
+
+<h3>QR-Code für Besucher</h3>
+
+@if (CurrentQr == null)
+{
+    <p>Lade QR-Code...</p>
+}
+else
+{
+    <img src="data:image/png;base64,@CurrentQr" style="width:300px" />
+}
+
+<button class="btn btn-primary mt-3" @onclick="NextCode">Nächster Code</button>
+
+@code {
+    private string? CurrentQr;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNextQr();
+    }
+
+    private async Task NextCode()
+    {
+        await LoadNextQr();
+    }
+
+    private async Task LoadNextQr()
+    {
+        // Ruft vom Server ein Base64-Bild ab
+        CurrentQr = await Http.GetStringAsync("/api/qr/next");
+    }
+
+    [Inject]
+    public HttpClient Http { get; set; } = default!;
+}
+
