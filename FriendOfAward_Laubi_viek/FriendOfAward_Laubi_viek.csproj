@@ -11,4 +11,8 @@
     <Folder Include="Components\Pages\admin\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MySql.Data" Version="9.5.0" />
+  </ItemGroup>
+
 </Project>

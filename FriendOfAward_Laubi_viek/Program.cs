@@ -23,4 +23,5 @@ app.MapRazorComponents<App>()
 
 app.Run();
 
+builder.Services.AddSingleton<AuthServiceSimple>();
 
