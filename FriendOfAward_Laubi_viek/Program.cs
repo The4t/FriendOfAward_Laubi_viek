@@ -25,6 +25,7 @@ app.MapRazorComponents<App>()
 
 app.Run();
 
+builder.Services.AddSingleton<AuthServiceSimple>();
 
 var qrList = new Queue<string>(
     Enumerable.Range(0, 100).Select(_ => Guid.NewGuid().ToString("N"))
