@@ -1,5 +1,7 @@
 ﻿@page "/"
-@inject NavigationManager Nav
+@inject NavigationManager Nav 
+@inject AuthServiceSimple Auth
+
 
 <div class="login-wrapper">
     <div class="login-card">
@@ -36,19 +38,22 @@
     string TestEmail = "admin@test.at";
     string TestPassword = "1234";
 
-    Task DoLogin()
+    private void DoLogin()
     {
-        if (Email == TestEmail && Password == TestPassword)
+        Console.WriteLine("Login-Button gedrückt!"); // <<< TEST
+
+        bool result = Auth.ValidateLogin(Email, Password);
+
+        if (result)
         {
-            Console.WriteLine("Anmeldung war erfolgreich");
-            Nav.NavigateTo("/showqr");
+            Console.WriteLine("Login erfolgreich!"); // <<< TEST
+            Nav.NavigateTo("/home");
         }
         else
         {
+            Console.WriteLine("Login fehlgeschlagen!"); // <<< TEST
             ErrorMessage = "E-Mail oder Passwort ist falsch.";
         }
-
-        return Task.CompletedTask;
     }
 }
 
