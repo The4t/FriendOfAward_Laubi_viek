@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using FriendOfAward_Laubi_viek;
 using FriendOfAward_Laubi_viek.Components;
 using QRCoder;
@@ -48,3 +49,12 @@ app.MapGet("/api/qr/next", () =>
 
     return Results.Text(base64);
 });
+
+
+// Controller aktivieren
+builder.Services.AddControllers();
+
+app.MapControllers();
+
+app.Run();
+
