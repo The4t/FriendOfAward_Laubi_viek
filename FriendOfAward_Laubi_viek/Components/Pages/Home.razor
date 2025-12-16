@@ -1,1 +1,147 @@
-﻿
+﻿@page "/"
+@rendermode InteractiveServer
+
+<style>
+    .btn {
+        background-color: #ddd;
+        border: none;
+        border-radius: 8px;
+        width: 60px;
+        height: 50px;
+        margin: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        user-select: none;
+        position: relative;
+    }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Favorit – grün */
+        .btn.fav {
+            background-color: #7fdc9f;
+            color: #1b4d2b;
+        }
+
+        /* Topfavorit – gold */
+        .btn.topfav {
+            background: linear-gradient(135deg, #ffd700, #ffb700);
+            color: #5c4300;
+            box-shadow: 0 0 8px rgba(255, 183, 0, 0.8);
+        }
+
+    /* Sterne */
+    .star {
+        position: absolute;
+        top: 2px;
+        right: 4px;
+        font-size: 14px;
+        pointer-events: none;
+    }
+</style>
+
+
+
+<h3 style="text-align:center;">Friends of Award</h3>
+<p style="text-align:center;">
+    Geben Sie uns Ihre persönlichen Favoriten bekannt!<br />
+    Einfacher Klick = Favorit (max. 5)<br />
+    Doppelklick = Topfavorit (max. 1)<br />
+    Diese Abstimmung ist anonym und auf ein Gerät beschränkt.
+</p>
+
+<div style="align-content: center; text-align: center">
+    @for (int i = 1; i <= 20; i++)
+    {
+        <button @key="i"
+                type="button"
+                class="@GetButtonClass(i)"
+                disabled="@IsSubmitted"
+                @onclick="() => ToggleFavorite(i)"
+                @ondblclick="() => ToggleTopFavorite(i)">
+            @i
+
+            @if (TopFavorite == i)
+            {
+                <span class="star">⭐⭐</span>
+            }
+            else if (Favorites.Contains(i))
+            {
+                <span class="star">⭐</span>
+            }
+        </button>
+
+        @if (i % 4 == 0)
+        {
+            <br />
+        }
+    }
+
+
+    <button disabled="@IsSubmitted"
+            @onclick="Submit">
+        @(IsSubmitted ? "Bereits abgesendet" : "Absenden")
+    </button>
+
+</div>
+
+@code {
+    private HashSet<int> Favorites = new();
+    private int? TopFavorite = null;
+
+    private const int MaxFavorites = 5;
+    private bool IsSubmitted = false;
+
+    private void ToggleFavorite(int number)
+    {
+        if (IsSubmitted) return;
+        if (TopFavorite == number) return;
+
+        if (Favorites.Contains(number))
+            Favorites.Remove(number);
+        else if (Favorites.Count < MaxFavorites)
+            Favorites.Add(number);
+    }
+
+
+    private void ToggleTopFavorite(int number)
+    {
+        if (IsSubmitted) return;
+
+        if (TopFavorite == number)
+            TopFavorite = null;
+        else
+        {
+            TopFavorite = number;
+            Favorites.Remove(number);
+        }
+    }
+
+
+    private string GetButtonClass(int number)
+    {
+        if (TopFavorite == number)
+        {
+            Console.WriteLine("TOPFAV");
+            return "btn topfav";
+        }
+        if (Favorites.Contains(number))
+        {
+            Console.WriteLine("FAV");
+            return "btn fav";
+        }
+        return "btn";
+    }
+
+    private void Submit()
+    {
+        IsSubmitted = true;
+
+        Console.WriteLine("Favoriten: " + string.Join(", ", Favorites));
+        Console.WriteLine("Topfavorit: " + TopFavorite);
+    }
+}
+
