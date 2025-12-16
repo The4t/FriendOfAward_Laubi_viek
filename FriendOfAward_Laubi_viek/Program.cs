@@ -3,14 +3,20 @@ using FriendOfAward_Laubi_viek.Components;
 using QRCoder;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+
+
+
+
 builder.Services.AddSingleton<AuthServiceSimple>();
 
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
@@ -23,6 +29,7 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

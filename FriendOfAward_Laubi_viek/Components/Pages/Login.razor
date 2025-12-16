@@ -1,6 +1,7 @@
 ﻿@page "/"
 @inject NavigationManager Nav 
 @inject AuthServiceSimple Auth
+@rendermode InteractiveServer
 
 
 <div class="login-wrapper">
@@ -19,7 +20,10 @@
         </div>
         <br />
 
-        <button type="button" class="btn-login" @onclick="DoLogin">Anmelden</button>
+
+
+        <button class="login-button" @onclick="Btn_DoLogin">  Login</button>
+
 
 
         @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -35,26 +39,26 @@
     string Password = "";
     string ErrorMessage = "";
 
-    string TestEmail = "admin@test.at";
-    string TestPassword = "1234";
 
-    private void DoLogin()
+
+    private void Btn_DoLogin()
     {
-        Console.WriteLine("Login-Button gedrückt!"); // <<< TEST
+        Console.WriteLine("Login-Button gedrückt!"); 
 
         bool result = Auth.ValidateLogin(Email, Password);
 
         if (result)
         {
-            Console.WriteLine("Login erfolgreich!"); // <<< TEST
-            Nav.NavigateTo("/home");
+            Console.WriteLine("Login erfolgreich!"); 
+            Nav.NavigateTo("/showqr");
         }
         else
         {
-            Console.WriteLine("Login fehlgeschlagen!"); // <<< TEST
+            Console.WriteLine("Login fehlgeschlagen!"); 
             ErrorMessage = "E-Mail oder Passwort ist falsch.";
         }
     }
+
 }
 
 
