@@ -1,20 +1,18 @@
-﻿@namespace App
-@using FriendOfAward_Laubi_viek.Components.Layout
-
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" href="~/css/app.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["FriendOfAward_Laubi_viek.styles.css"]" />
+    <ImportMap />
+    <HeadOutlet />
 </head>
-
-<CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(Program).Assembly">
-        <Found Context="routeData">
-            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        </Found>
-
-        <NotFound>
-            <LayoutView Layout="@typeof(MainLayout)">
-                <h3>Seite nicht gefunden</h3>
-            </LayoutView>
-        </NotFound>
-    </Router>
-</CascadingAuthenticationState>
+<body>
+    <Routes />
+    <ReconnectModal />
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+</html>
