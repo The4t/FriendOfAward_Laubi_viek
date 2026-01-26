@@ -108,11 +108,7 @@ public class DbWrapperMySqlV2
 		return numRecords;
 	}
 
-	/// <summary>
-	/// Bezüglich offener / geschlossener Connections gleiches Verhalten wie DataAdapter.
-	/// Verwendet die ExecuteScalar-Methode des Command-Objekts.
-	/// </summary>
-	/// <returns>Liefert genau 1 Wert, evtl. sogar DBNull.Value. Deshalb Datentyp object.</returns>
+
 	public object? RunQueryScalar(string sqlString)
 	{
 		object? obj = null;

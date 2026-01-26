@@ -1,39 +1,82 @@
-﻿@page "/showqr"
+﻿@page "/generateqr"
+@inject QrServiceToken QrService
+@rendermode InteractiveServer
 
-<h3>QR-Code für Besucher</h3>
+<div class="qr-wrapper">
+    <div class="qr-card">
+        <h2>QR‑Code Generator</h2>
+        <p>Erstelle einen einmaligen QR‑Code für den Scan‑Zugang.</p>
 
-@if (CurrentQr == null)
-{
-    <p>Lade QR-Code...</p>
-}
-else
-{
-    <img src="data:image/png;base64,@CurrentQr" style="width:300px" />
-}
+        @if (QrCode == null)
+        {
+            <button class="qr-btn" @onclick="GenerateQr">QR‑Code erstellen</button>
+        }
+        else
+        {
+            <button class="qr-btn" @onclick="GenerateQr">Neuen QR‑Code erstellen</button>
 
-<button class="btn btn-primary mt-3" @onclick="NextCode">Nächster Code</button>
+            <div class="qr-image-box">
+                <img src="data:image/png;base64,@QrCode" />
+            </div>
+        }
+    </div>
+</div>
 
 @code {
-    private string? CurrentQr;
+    string? QrCode;
 
-    protected override async Task OnInitializedAsync()
+    private void GenerateQr()
     {
-        await LoadNextQr();
+        string token = QrService.CreateAndStoreToken();
+        QrCode = QrService.GenerateQrBase64(token);
     }
-
-    private async Task NextCode()
-    {
-        await LoadNextQr();
-    }
-
-    private async Task LoadNextQr()
-    {
-        // Ruft vom Server ein Base64-Bild ab
-        CurrentQr = await Http.GetStringAsync("/api/qr/next");
-    }
-
-    [Inject]
-    public HttpClient Http { get; set; } = default!;
 }
 
+<style>
+    .qr-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 60px;
+    }
 
+    .qr-card {
+        background: #ffffff;
+        padding: 30px;
+        width: 420px;
+        border-radius: 14px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+
+        .qr-card h2 {
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+    .qr-btn {
+        background: #4a6cf7;
+        color: white;
+        border: none;
+        padding: 12px 22px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: 0.2s;
+    }
+
+        .qr-btn:hover {
+            background: #3a58d8;
+        }
+
+    .qr-image-box {
+        margin-top: 25px;
+        padding: 15px;
+        background: #f7f7f7;
+        border-radius: 12px;
+        display: inline-block;
+    }
+
+        .qr-image-box img {
+            width: 240px;
+        }
+</style>

@@ -1,28 +1,20 @@
-﻿namespace FriendOfAward_Laubi_viek
+﻿public class AuthServiceSimple
 {
-    public class AuthServiceSimple
+    private readonly DbWrapperMySqlV2 db = DbWrapperMySqlV2.Wrapper;
+
+    public bool ValidateLogin(string email, string password)
     {
-        public bool ValidateLogin(string email, string password)
-        {
-            string sql = $@"
-                SELECT COUNT(*)
-                FROM Admins
-                WHERE Email = '{email}'
-                  AND Password = '{password}'";
+        string sql = $@"
+            SELECT COUNT(*) 
+            FROM admins 
+            WHERE Email = '{email}' AND Password = '{password}'
+        ";
 
-            try
-            {
-                object? result = DbWrapperMySqlV2.Wrapper.RunQueryScalar(sql);
+        object? result = db.RunQueryScalar(sql);
 
-                int count = Convert.ToInt32(result);
+        if (result == null || result == DBNull.Value)
+            return false;
 
-                return count == 1;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("DB-Fehler: " + ex.Message);
-                return false;
-            }
-        }
+        return Convert.ToInt32(result) == 1;
     }
 }
