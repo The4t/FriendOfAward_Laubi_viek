@@ -1,23 +1,453 @@
-﻿@page "/home"
-@inject QrServiceToken QrService
+﻿@page "/"
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Friends of Award</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-<h3>QR-Code erzeugen</h3>
+        .dark-mode {
+            background-color: #222;
+            color: #eee;
+        }
 
-@if (QrCode == null)
-{
-    <button @onclick="GenerateQr">QR-Code erstellen</button>
-}
-else
-{
-    <img src="data:image/png;base64,@QrCode" style="width:250px;" />
-}
+        h1 {
+            text-align: center;
+            margin-top: 1rem;
+        }
 
-@code {
-    string? QrCode;
+        .legend-box {
+            text-align: center;
+            margin: 0.5rem 1rem 1rem;
+        }
 
-    private void GenerateQr()
-    {
-        string token = QrService.CreateAndStoreToken();
-        QrCode = QrService.GenerateQrBase64(token);
-    }
-}
+            .legend-box p {
+                margin: 0.4rem 0;
+                font-weight: bold;
+            }
+
+            .legend-box .small-note {
+                font-size: 0.9rem;
+                font-weight: normal;
+                margin-top: 0.6rem;
+            }
+
+        #buttonGrid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 1rem;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .button {
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #e0e0e0;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+            .button:active {
+                transform: scale(0.95);
+            }
+
+        .favorit {
+            background-color: #4CAF50;
+            color: white;
+            position: relative;
+        }
+
+            .favorit::after {
+                content: "⭐";
+                position: absolute;
+                top: 5px;
+                right: 10px;
+            }
+
+        .topfavorit {
+            background-color: orange;
+            color: white;
+            position: relative;
+        }
+
+            .topfavorit::after {
+                content: "⭐⭐";
+                position: absolute;
+                top: 5px;
+                right: 10px;
+            }
+
+        #info {
+            text-align: center;
+            margin: 1rem;
+            font-weight: bold;
+        }
+
+        #message {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #submitBtn {
+            display: block;
+            margin: 1rem auto;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            transition: background 0.3s;
+        }
+
+            #submitBtn:hover:not(:disabled) {
+                background-color: #1976D2;
+            }
+
+            #submitBtn:disabled {
+                background-color: #90CAF9;
+                cursor: not-allowed;
+            }
+
+        #adminToggle {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        #adminPanel {
+            display: none;
+            background: white;
+            padding: 1rem;
+            margin: 1rem;
+            border: 1px solid #ccc;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Friends of Award</h1>
+    <div class="legend-box">
+        <p>Geben Sie uns Ihre persönlichen Favoriten bekannt!</p>
+        <p>
+            Einfacher Klick = Favorit (max. 5)<br />
+            Doppelklick = Topfavorit (max. 1)
+        </p>
+        <p class="small-note">Diese Abstimmung ist anonym und auf ein Gerät beschränkt.</p>
+    </div>
+
+    <div id="buttonGrid"></div>
+    <div id="info"></div>
+    <div id="message"></div>
+    <button id="submitBtn" disabled>Bewertung absenden</button>
+
+    <div id="adminToggle">🏠</div>
+
+    <div id="adminPanel">
+        <h2>Adminbereich</h2>
+        <div>
+            <label>Admin-Code:</label>
+            <input type="password" id="adminCode" />
+            <button onclick="checkAdmin()">Anmelden</button>
+            <button onclick="logoutAdmin()">Abmelden</button>
+        </div>
+        <div id="adminControls" style="display:none;">
+            <button onclick="startVoting()">Abstimmung starten</button>
+            <button onclick="stopVoting()">Abstimmung stoppen</button>
+            <button onclick="resetVotes()">Alle Bewertungen löschen</button>
+            <button onclick="clearLocalVote()">Neue Abstimmung auf diesem Gerät erlauben</button>
+            <button onclick="changePassword()">Passwort ändern</button>
+            <button onclick="exportExcel()">Excel exportieren</button>
+            <div id="adminStatus" style="margin-top:10px; color:blue;"></div>
+            <table id="summaryTable">
+                <thead>
+                    <tr>
+                        <th>Arbeit</th>
+                        <th>Anzahl Nennung Favorit</th>
+                        <th>Anzahl Nennung Topfavorit</th>
+                        <th>Punkte</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let isAdmin = false;
+        let password = localStorage.getItem("adminPass") || "admin";
+        let votingActive = true;
+        let favoriten = new Set();
+        let topfavorit = null;
+
+        const buttonGrid = document.getElementById("buttonGrid");
+        const info = document.getElementById("info");
+        const message = document.getElementById("message");
+        const submitBtn = document.getElementById("submitBtn");
+        const adminPanel = document.getElementById("adminPanel");
+        const adminControls = document.getElementById("adminControls");
+        const summaryTable = document.querySelector("#summaryTable tbody");
+        const adminStatus = document.getElementById("adminStatus");
+
+        function animateButton(btn) {
+          btn.style.transform = "scale(0.95)";
+          setTimeout(() => {
+            btn.style.transform = "";
+          }, 150);
+        }
+
+        function createButtons() {
+          for (let i = 1; i <= 20; i++) {
+            const btn = document.createElement("button");
+            btn.className = "button";
+            btn.textContent = i;
+            btn.dataset.id = i;
+            btn.setAttribute("title", "Klick = Favorit, Doppelklick = Topfavorit");
+
+            btn.addEventListener("click", () => {
+              animateButton(btn);
+              handleClick(i, btn);
+            });
+
+            btn.addEventListener("dblclick", () => {
+              animateButton(btn);
+              toggleTopFavorit(i, btn);
+            });
+
+            btn.addEventListener("touchstart", () => {
+              btn.longPressTimer = setTimeout(() => {
+                animateButton(btn);
+                toggleTopFavorit(i, btn);
+              }, 600);
+            });
+            btn.addEventListener("touchend", () => clearTimeout(btn.longPressTimer));
+
+            buttonGrid.appendChild(btn);
+          }
+        }
+
+        function handleClick(id, btn) {
+          if (!votingActive && !isAdmin) return;
+
+          if (topfavorit === id) {
+            topfavorit = null;
+            btn.classList.remove("topfavorit");
+          } else if (favoriten.has(id)) {
+            favoriten.delete(id);
+            btn.classList.remove("favorit");
+          } else if (favoriten.size < 5) {
+            favoriten.add(id);
+            btn.classList.add("favorit");
+          } else {
+            message.textContent = "Maximal 5 Favoriten erlaubt.";
+            message.style.color = "red";
+          }
+
+          updateInfo();
+        }
+
+        function toggleTopFavorit(id, btn) {
+          if (!votingActive && !isAdmin) return;
+
+          if (topfavorit === id) {
+            topfavorit = null;
+            btn.classList.remove("topfavorit");
+          } else {
+            const old = document.querySelector(".topfavorit");
+            if (old) old.classList.remove("topfavorit");
+
+            topfavorit = id;
+            favoriten.delete(id);
+            document.querySelectorAll(".button").forEach(b => {
+              if (parseInt(b.dataset.id) === id) b.classList.remove("favorit");
+            });
+            btn.classList.add("topfavorit");
+          }
+
+          message.textContent = "";
+          updateInfo();
+        }
+
+        function updateInfo() {
+          const favoritenCount = favoriten.size;
+          const remainingFavoriten = 5 - favoritenCount;
+          const remainingTop = topfavorit ? 0 : 1;
+          info.textContent = `Offen: ${remainingFavoriten} Favoriten, ${remainingTop} Topfavorit`;
+          submitBtn.disabled = (favoritenCount + (topfavorit ? 1 : 0)) !== 6;
+        }
+
+        function submitVote() {
+          if (submitBtn.disabled) return;
+          const results = JSON.parse(localStorage.getItem("results") || "[]");
+          results.push({
+            favoriten: Array.from(favoriten),
+            topfavorit,
+            time: new Date().toLocaleString()
+          });
+          localStorage.setItem("results", JSON.stringify(results));
+          localStorage.setItem("hasVoted", "true");
+          disableVoting();
+          message.style.color = "green";
+          message.textContent = "Danke für Ihre Bewertung!";
+          renderSummary();
+        }
+
+        function disableVoting() {
+          document.querySelectorAll(".button").forEach(b => b.disabled = true);
+          submitBtn.disabled = true;
+        }
+
+        function enableVoting() {
+          document.querySelectorAll(".button").forEach(b => {
+            b.disabled = false;
+            b.classList.remove("favorit", "topfavorit");
+          });
+          favoriten.clear();
+          topfavorit = null;
+          updateInfo();
+        }
+
+        function checkAdmin() {
+          const code = document.getElementById("adminCode").value;
+          if (code === password) {
+            isAdmin = true;
+            adminControls.style.display = "block";
+            renderSummary();
+          } else {
+            alert("Falscher Admin-Code");
+          }
+        }
+
+        function logoutAdmin() {
+          isAdmin = false;
+          adminControls.style.display = "none";
+        }
+
+        function startVoting() {
+          votingActive = true;
+          localStorage.setItem("votingActive", "true");
+          adminStatus.textContent = "Abstimmung wurde gestartet.";
+        }
+
+        function stopVoting() {
+          votingActive = false;
+          localStorage.setItem("votingActive", "false");
+          adminStatus.textContent = "Abstimmung wurde gestoppt.";
+        }
+
+        function clearLocalVote() {
+          localStorage.removeItem("hasVoted");
+          enableVoting();
+          adminStatus.textContent = "Dieses Gerät darf erneut abstimmen.";
+        }
+
+        function resetVotes() {
+          if (confirm("Alle Bewertungen löschen?")) {
+            localStorage.removeItem("results");
+            renderSummary();
+            adminStatus.textContent = "Alle Bewertungen wurden gelöscht.";
+          }
+        }
+
+        function changePassword() {
+          const newPass = prompt("Neues Admin-Passwort eingeben:");
+          if (newPass) {
+            password = newPass;
+            localStorage.setItem("adminPass", newPass);
+            adminStatus.textContent = "Passwort wurde geändert.";
+          }
+        }
+
+        function renderSummary() {
+          const results = JSON.parse(localStorage.getItem("results") || "[]");
+          const favoritenCount = Array(20).fill(0);
+          const topfavoritenCount = Array(20).fill(0);
+
+          results.forEach(entry => {
+            entry.favoriten.forEach(i => favoritenCount[i - 1]++);
+            if (entry.topfavorit) topfavoritenCount[entry.topfavorit - 1]++;
+          });
+
+          summaryTable.innerHTML = "";
+          for (let i = 0; i < 20; i++) {
+            const row = document.createElement("tr");
+            const punkte = favoritenCount[i] + topfavoritenCount[i] * 2;
+            row.innerHTML = `<td>${i + 1}</td><td>${favoritenCount[i]}</td><td>${topfavoritenCount[i]}</td><td>${punkte}</td>`;
+            summaryTable.appendChild(row);
+          }
+        }
+
+        function exportExcel() {
+          const data = [["Arbeit", "Anzahl Nennung Favorit", "Anzahl Nennung Topfavorit", "Punkte"]];
+          const rows = summaryTable.querySelectorAll("tr");
+
+          rows.forEach(row => {
+            const cells = row.querySelectorAll("td");
+            if (cells.length === 4) {
+              data.push([
+                cells[0].innerText,
+                cells[1].innerText,
+                cells[2].innerText,
+                cells[3].innerText
+              ]);
+            }
+          });
+
+          const worksheet = XLSX.utils.aoa_to_sheet(data);
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Auswertung");
+
+          XLSX.writeFile(workbook, "auswertung.xlsx");
+        }
+
+        document.getElementById("adminToggle").addEventListener("click", () => {
+          adminPanel.style.display = adminPanel.style.display === "none" ? "block" : "none";
+        });
+
+        submitBtn.addEventListener("click", submitVote);
+
+        if (localStorage.getItem("votingActive") === "false") {
+          votingActive = false;
+        }
+
+        if (localStorage.getItem("hasVoted") === "true") {
+          disableVoting();
+        }
+
+        if (localStorage.getItem("darkMode") === "true") {
+          document.body.classList.add("dark-mode");
+        }
+
+        createButtons();
+        updateInfo();
+        renderSummary();
+    </script>
+</body>
+</html>
