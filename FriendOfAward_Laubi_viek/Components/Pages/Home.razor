@@ -1,1 +1,23 @@
-﻿
+﻿@page "/home"
+@inject QrServiceToken QrService
+
+<h3>QR-Code erzeugen</h3>
+
+@if (QrCode == null)
+{
+    <button @onclick="GenerateQr">QR-Code erstellen</button>
+}
+else
+{
+    <img src="data:image/png;base64,@QrCode" style="width:250px;" />
+}
+
+@code {
+    string? QrCode;
+
+    private void GenerateQr()
+    {
+        string token = QrService.CreateAndStoreToken();
+        QrCode = QrService.GenerateQrBase64(token);
+    }
+}

@@ -1,0 +1,88 @@
+﻿@page "/scan"
+@inject NavigationManager Nav
+@inject QrServiceToken QrService
+@rendermode InteractiveServer
+
+<div class="scan-wrapper">
+    <div class="scan-card">
+        <h2>QR‑Code Scan</h2>
+
+        @if (Result == null)
+        {
+            <p class="scan-loading">Token wird geprüft...</p>
+        }
+        else if (Result == "OK")
+        {
+            <p class="scan-success">✔ Token gültig – Zugriff erlaubt</p>
+        }
+        else
+        {
+            <p class="scan-error">✖ Token ungültig oder bereits verwendet</p>
+        }
+    </div>
+</div>
+
+@code {
+    string? token;
+    string? Result;
+
+    protected override void OnInitialized()
+    {
+        // Token nur auslesen, NICHT validieren
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        token = query["token"];
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return; // verhindert doppeltes Ausführen
+
+        if (token == null)
+        {
+            Result = "INVALID";
+            StateHasChanged();
+            return;
+        }
+
+        bool ok = QrService.ValidateToken(token);
+        Result = ok ? "OK" : "INVALID";
+
+        StateHasChanged();
+    }
+}
+
+<style>
+    .scan-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 60px;
+    }
+
+    .scan-card {
+        background: #ffffff;
+        padding: 30px;
+        width: 420px;
+        border-radius: 14px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+
+    .scan-loading {
+        font-size: 18px;
+        color: #666;
+    }
+
+    .scan-success {
+        font-size: 20px;
+        color: #2ecc71;
+        font-weight: 600;
+    }
+
+    .scan-error {
+        font-size: 20px;
+        color: #e74c3c;
+        font-weight: 600;
+    }
+</style>
