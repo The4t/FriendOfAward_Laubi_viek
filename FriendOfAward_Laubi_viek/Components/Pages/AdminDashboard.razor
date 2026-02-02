@@ -1,0 +1,151 @@
+﻿@page "/admindashboard"
+@inject NavigationManager Nav
+@inject AuthServiceSimple Auth
+@rendermode InteractiveServer
+
+<div class="topbar">
+    <div class="username">👤 @Username</div>
+    <button class="logout-btn" @onclick="Logout">Logout</button>
+</div>
+
+<div class="dash-wrapper">
+    <div class="dash-card">
+        <h2>Admin Dashboard</h2>
+        <p class="subtitle">Wähle eine Aktion aus.</p>
+
+        <div class="section">
+            <button class="dash-btn" @onclick="GoToQr">QR‑Code Generator</button>
+        </div>
+
+        <div class="section">
+            <button class="dash-btn" @onclick="GoToResults">Ergebnisse ansehen</button>
+        </div>
+
+        <div class="section">
+            <button class="dash-btn secondary" @onclick="GoToDpl">Diplomarbeiten auswahl</button>
+        </div>
+
+
+        <div class="section">
+            <button class="dash-btn" @onclick="GoToImport">Excel importieren</button>
+        </div>
+
+        <div class="section">
+            <button class="dash-btn" @onclick="GoToExport">Excel exportieren</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    string Username = "Unbekannt";
+
+    protected override void OnInitialized()
+    {
+        Username = Auth.GetCurrentUser() ?? "Unbekannt";
+    }
+
+    void GoToQr() => Nav.NavigateTo("/generateqr");
+    void GoToResults() => Nav.NavigateTo("/results");
+    void GoToDpl() => Nav.NavigateTo("/home");
+
+
+    void GoToImport() => Nav.NavigateTo("/");
+    void GoToExport() => Nav.NavigateTo("/");
+
+    void Logout()
+    {
+        Auth.Logout();
+        Nav.NavigateTo("/");
+    }
+}
+
+<style>
+    .topbar {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 40px;
+        background: #f7f7f7;
+        border-bottom: 1px solid #ddd;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 10;
+    }
+
+    .username {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .logout-btn {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 10px 30px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.2s;
+        margin-right: 16px;
+    }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+    .dash-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 120px;
+    }
+
+    .dash-card {
+        background: #ffffff;
+        padding: 30px;
+        width: 420px;
+        border-radius: 14px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+
+    h2 {
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .subtitle {
+        color: #666;
+        margin-bottom: 25px;
+        font-size: 14px;
+    }
+
+    .section {
+        margin-bottom: 20px;
+    }
+
+    .dash-btn {
+        width: 100%;
+        padding: 12px;
+        background: #4a6cf7;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .dash-btn:hover {
+            background: #3a58d8;
+        }
+
+        .dash-btn.secondary {
+            background: #555;
+        }
+
+            .dash-btn.secondary:hover {
+                background: #333;
+            }
+</style>

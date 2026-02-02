@@ -6,8 +6,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+
 builder.Services.AddSingleton<AuthServiceSimple>();
 builder.Services.AddSingleton<QrServiceToken>();
+
+
+builder.Services.AddSingleton<DbWrapperMySqlV2>(DbWrapperMySqlV2.Wrapper);
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();

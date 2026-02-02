@@ -1,0 +1,106 @@
+﻿@page "/results"
+@inject DbWrapperMySqlV2 Db
+@inject NavigationManager Nav
+@using System.Data
+@rendermode InteractiveServer
+
+<button class="back-btn" @onclick="GoBack">← Zurück zum Dashboard</button>
+
+<h2>Ergebnisse der Diplomarbeiten</h2>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <p style="color:red; font-weight:bold;">Fehler: @ErrorMessage</p>
+}
+else
+{
+    <table class="result-table">
+        <thead>
+            <tr>
+                <th>Abteilung</th>
+                <th>Titel</th>
+                <th>Autor:innen</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in DiplomListe)
+            {
+                <tr>
+                    <td>@row.Abteilung</td>
+                    <td>@row.Titel</td>
+                    <td>@row.Autoren</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<DiplomRow> DiplomListe = new();
+    string ErrorMessage = "";
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            // SQL-Anfrage ohne die 'stimmen' Spalte
+            DataTable table = Db.RunQuery("SELECT abteilung, titel, autoren FROM diplomarbeiten");
+
+            foreach (DataRow r in table.Rows)
+            {
+                DiplomListe.Add(new DiplomRow
+                {
+                    Abteilung = r["abteilung"].ToString() ?? "",
+                    Titel = r["titel"].ToString() ?? "",
+                    Autoren = r["autoren"].ToString() ?? "",
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    void GoBack() => Nav.NavigateTo("/admindashboard");
+
+    public class DiplomRow
+    {
+        public string Abteilung { get; set; } = "";
+        public string Titel { get; set; } = "";
+        public string Autoren { get; set; } = "";
+    }
+}
+
+<style>
+    .back-btn {
+        background: #555;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-bottom: 20px;
+        transition: 0.2s;
+    }
+
+        .back-btn:hover {
+            background: #333;
+        }
+
+    .result-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+        .result-table th, .result-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        .result-table th {
+            background: #f0f0f0;
+        }
+</style>

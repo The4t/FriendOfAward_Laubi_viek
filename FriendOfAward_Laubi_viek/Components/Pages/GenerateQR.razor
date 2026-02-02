@@ -1,11 +1,17 @@
 ﻿@page "/generateqr"
 @inject QrServiceToken QrService
+@inject NavigationManager Nav
 @rendermode InteractiveServer
+
+<div class="topbar">
+    <button class="back-btn" @onclick="GoHome">← Zurück zum Dashboard</button>
+</div>
 
 <div class="qr-wrapper">
     <div class="qr-card">
+
         <h2>QR‑Code Generator</h2>
-        <p>Erstelle einen einmaligen QR‑Code für den Scan‑Zugang.</p>
+        <p class="subtitle">Erstelle einen einmaligen QR‑Code für den Scan‑Zugang.</p>
 
         @if (QrCode == null)
         {
@@ -30,13 +36,43 @@
         string token = QrService.CreateAndStoreToken();
         QrCode = QrService.GenerateQrBase64(token);
     }
+
+    void GoHome() => Nav.NavigateTo("/admindashboard");
 }
 
 <style>
+    /* Topbar */
+    .topbar {
+        width: 100%;
+        padding: 15px 25px;
+        background: #f7f7f7;
+        border-bottom: 1px solid #ddd;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 10;
+    }
+
+    .back-btn {
+        background: #555;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+        .back-btn:hover {
+            background: #333;
+        }
+
+    /* Layout */
     .qr-wrapper {
         display: flex;
         justify-content: center;
-        margin-top: 60px;
+        margin-top: 120px;
     }
 
     .qr-card {
@@ -48,20 +84,28 @@
         text-align: center;
     }
 
-        .qr-card h2 {
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
+    h2 {
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .subtitle {
+        color: #666;
+        margin-bottom: 25px;
+        font-size: 14px;
+    }
 
     .qr-btn {
+        width: 100%;
+        padding: 12px;
         background: #4a6cf7;
         color: white;
         border: none;
-        padding: 12px 22px;
         border-radius: 8px;
-        cursor: pointer;
         font-size: 16px;
+        cursor: pointer;
         transition: 0.2s;
+        margin-bottom: 20px;
     }
 
         .qr-btn:hover {
@@ -69,14 +113,15 @@
         }
 
     .qr-image-box {
-        margin-top: 25px;
-        padding: 15px;
-        background: #f7f7f7;
+        margin-top: 20px;
+        padding: 20px;
+        background: #fafafa;
         border-radius: 12px;
-        display: inline-block;
+        border: 1px solid #eee;
     }
 
         .qr-image-box img {
-            width: 240px;
+            width: 220px;
+            height: 220px;
         }
 </style>
