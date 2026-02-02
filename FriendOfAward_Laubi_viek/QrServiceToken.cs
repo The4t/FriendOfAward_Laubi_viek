@@ -34,7 +34,7 @@ public class QrServiceToken
 
     public string GenerateQrBase64(string token)
     {
-        string url = $"http://172.17.7.74:5432/scan?token={token}";
+        string url = $"http://172.17.7.60:5432/scan?token={token}";
 
 
         var gen = new QRCodeGenerator();
