@@ -1,4 +1,5 @@
-﻿@page "/home"
+﻿ @page "/home"
+@using System.Data
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -41,13 +42,21 @@
                 margin-top: 0.6rem;
             }
 
-        #buttonGrid {
+        .button-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
-            padding: 1rem;
-            max-width: 600px;
+            max-width: 800px;
             margin: auto;
+        }
+
+        .diplom-btn {
+            padding: 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            background: #e0e0e0;
+            cursor: pointer;
         }
 
         .button {
@@ -150,11 +159,49 @@
             text-align: center;
         }
 
+        .diplom-table {
+            width: 80%;
+            margin: 2rem auto;
+            border-collapse: collapse;
+            font-family: sans-serif;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+            .diplom-table thead {
+                background: #e8f2ff; /* sehr leichtes Blau */
+            }
+
+            .diplom-table th {
+                padding: 0.75rem;
+                text-align: left;
+                font-weight: bold;
+                color: #2a4d7a;
+                border-bottom: 2px solid #c9ddff;
+            }
+
+            .diplom-table td {
+                padding: 0.7rem;
+                border-bottom: 1px solid #e3e9f2;
+            }
+
+            .diplom-table tr:nth-child(even) {
+                background: #f7faff; /* ganz leichtes Blau für Zebra-Effekt */
+            }
+
+            .diplom-table tr:hover {
+                background: #e6f0ff; /* dezentes Hover-Blau */
+                transition: background 0.2s ease-in-out;
+            }
+
     </style>
+
 </head>
 <body>
-    <h1>Friends of Award</h1>
-    <div class="legend-box">
+     <h1>Friends of Award</h1>
+        <div class="legend-box">
         <p>Geben Sie uns Ihre persönlichen Favoriten bekannt!</p>
         <p>
             Einfacher Klick = Favorit (max. 5)<br />
@@ -163,7 +210,35 @@
         <p class="small-note">Diese Abstimmung ist anonym und auf ein Gerät beschränkt.</p>
     </div>
 
-    <div id="buttonGrid"></div>
+    <div class="button-grid">
+        @foreach (var item in diplomarbeiten)
+        {
+            <button class="button"
+                    data-id="@item.Id"
+                    onclick="handleClick(@item.Id, this)"
+                    ondblclick="toggleTopFavorit(@item.Id, this)">
+                @item.Id
+            </button>
+
+        }
+    </div>
+    <table class="diplom-table">
+        <thead>
+            <tr>
+                <th>Nr.</th>
+                <th>Titel</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in diplomarbeiten)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Titel</td>
+                </tr>
+            }
+        </tbody>
+    </table>
     <div id="info"></div>
     <div id="message"></div>
     <button id="submitBtn" disabled>Bewertung absenden</button>
@@ -198,256 +273,42 @@
                 <tbody></tbody>
             </table>
         </div>
-    </div>
+    </div> 
 
-    <script>
-        let isAdmin = false;
-        let password = localStorage.getItem("adminPass") || "admin";
-        let votingActive = true;
-        let favoriten = new Set();
-        let topfavorit = null;
+    
 
-        const buttonGrid = document.getElementById("buttonGrid");
-        const info = document.getElementById("info");
-        const message = document.getElementById("message");
-        const submitBtn = document.getElementById("submitBtn");
-        const adminPanel = document.getElementById("adminPanel");
-        const adminControls = document.getElementById("adminControls");
-        const summaryTable = document.querySelector("#summaryTable tbody");
-        const adminStatus = document.getElementById("adminStatus");
+    <div id="info"></div>
+    <div id="message"></div>
 
-        function animateButton(btn) {
-          btn.style.transform = "scale(0.95)";
-          setTimeout(() => {
-            btn.style.transform = "";
-          }, 150);
+
+        @code {
+                public class Diplomarbeit
+                {
+                        public int Id { get; set; }
+                        public string Titel { get; set; }
+                }
+
+                List<Diplomarbeit> diplomarbeiten = new();
+
+                protected override void OnInitialized()
+                {
+                        LoadDiplomarbeiten();
+                }
+
+                private void LoadDiplomarbeiten()
+                {
+                        var db = DbWrapperMySqlV2.Wrapper;
+                        var table = db.RunQuery("SELECT id, titel FROM diplomarbeiten ORDER BY id");
+
+                        diplomarbeiten = table.AsEnumerable()
+                                .Select(row => new Diplomarbeit
+                                {
+                                        Id = Convert.ToInt32(row["id"]),
+                                        Titel = row["titel"].ToString()!
+                                })
+                                .ToList();
+                }
         }
-
-        function createButtons() {
-          for (let i = 1; i <= 20; i++) {
-            const btn = document.createElement("button");
-            btn.className = "button";
-            btn.textContent = i;
-            btn.dataset.id = i;
-            btn.setAttribute("title", "Klick = Favorit, Doppelklick = Topfavorit");
-
-            btn.addEventListener("click", () => {
-              animateButton(btn);
-              handleClick(i, btn);
-            });
-
-            btn.addEventListener("dblclick", () => {
-              animateButton(btn);
-              toggleTopFavorit(i, btn);
-            });
-
-            btn.addEventListener("touchstart", () => {
-              btn.longPressTimer = setTimeout(() => {
-                animateButton(btn);
-                toggleTopFavorit(i, btn);
-              }, 600);
-            });
-            btn.addEventListener("touchend", () => clearTimeout(btn.longPressTimer));
-
-            buttonGrid.appendChild(btn);
-          }
-        }
-
-        function handleClick(id, btn) {
-          if (!votingActive && !isAdmin) return;
-
-          if (topfavorit === id) {
-            topfavorit = null;
-            btn.classList.remove("topfavorit");
-          } else if (favoriten.has(id)) {
-            favoriten.delete(id);
-            btn.classList.remove("favorit");
-          } else if (favoriten.size < 5) {
-            favoriten.add(id);
-            btn.classList.add("favorit");
-          } else {
-            message.textContent = "Maximal 5 Favoriten erlaubt.";
-            message.style.color = "red";
-          }
-
-          updateInfo();
-        }
-
-        function toggleTopFavorit(id, btn) {
-          if (!votingActive && !isAdmin) return;
-
-          if (topfavorit === id) {
-            topfavorit = null;
-            btn.classList.remove("topfavorit");
-          } else {
-            const old = document.querySelector(".topfavorit");
-            if (old) old.classList.remove("topfavorit");
-
-            topfavorit = id;
-            favoriten.delete(id);
-            document.querySelectorAll(".button").forEach(b => {
-              if (parseInt(b.dataset.id) === id) b.classList.remove("favorit");
-            });
-            btn.classList.add("topfavorit");
-          }
-
-          message.textContent = "";
-          updateInfo();
-        }
-
-        function updateInfo() {
-          const favoritenCount = favoriten.size;
-          const remainingFavoriten = 5 - favoritenCount;
-          const remainingTop = topfavorit ? 0 : 1;
-          info.textContent = `Offen: ${remainingFavoriten} Favoriten, ${remainingTop} Topfavorit`;
-          submitBtn.disabled = (favoritenCount + (topfavorit ? 1 : 0)) !== 6;
-        }
-
-        function submitVote() {
-          if (submitBtn.disabled) return;
-          const results = JSON.parse(localStorage.getItem("results") || "[]");
-          results.push({
-            favoriten: Array.from(favoriten),
-            topfavorit,
-            time: new Date().toLocaleString()
-          });
-          localStorage.setItem("results", JSON.stringify(results));
-          localStorage.setItem("hasVoted", "true");
-          disableVoting();
-          message.style.color = "green";
-          message.textContent = "Danke für Ihre Bewertung!";
-          renderSummary();
-        }
-
-        function disableVoting() {
-          document.querySelectorAll(".button").forEach(b => b.disabled = true);
-          submitBtn.disabled = true;
-        }
-
-        function enableVoting() {
-          document.querySelectorAll(".button").forEach(b => {
-            b.disabled = false;
-            b.classList.remove("favorit", "topfavorit");
-          });
-          favoriten.clear();
-          topfavorit = null;
-          updateInfo();
-        }
-
-        function checkAdmin() {
-          const code = document.getElementById("adminCode").value;
-          if (code === password) {
-            isAdmin = true;
-            adminControls.style.display = "block";
-            renderSummary();
-          } else {
-            alert("Falscher Admin-Code");
-          }
-        }
-
-        function logoutAdmin() {
-          isAdmin = false;
-          adminControls.style.display = "none";
-        }
-
-        function startVoting() {
-          votingActive = true;
-          localStorage.setItem("votingActive", "true");
-          adminStatus.textContent = "Abstimmung wurde gestartet.";
-        }
-
-        function stopVoting() {
-          votingActive = false;
-          localStorage.setItem("votingActive", "false");
-          adminStatus.textContent = "Abstimmung wurde gestoppt.";
-        }
-
-        function clearLocalVote() {
-          localStorage.removeItem("hasVoted");
-          enableVoting();
-          adminStatus.textContent = "Dieses Gerät darf erneut abstimmen.";
-        }
-
-        function resetVotes() {
-          if (confirm("Alle Bewertungen löschen?")) {
-            localStorage.removeItem("results");
-            renderSummary();
-            adminStatus.textContent = "Alle Bewertungen wurden gelöscht.";
-          }
-        }
-
-        function changePassword() {
-          const newPass = prompt("Neues Admin-Passwort eingeben:");
-          if (newPass) {
-            password = newPass;
-            localStorage.setItem("adminPass", newPass);
-            adminStatus.textContent = "Passwort wurde geändert.";
-          }
-        }
-
-        function renderSummary() {
-          const results = JSON.parse(localStorage.getItem("results") || "[]");
-          const favoritenCount = Array(20).fill(0);
-          const topfavoritenCount = Array(20).fill(0);
-
-          results.forEach(entry => {
-            entry.favoriten.forEach(i => favoritenCount[i - 1]++);
-            if (entry.topfavorit) topfavoritenCount[entry.topfavorit - 1]++;
-          });
-
-          summaryTable.innerHTML = "";
-          for (let i = 0; i < 20; i++) {
-            const row = document.createElement("tr");
-            const punkte = favoritenCount[i] + topfavoritenCount[i] * 2;
-            row.innerHTML = `<td>${i + 1}</td><td>${favoritenCount[i]}</td><td>${topfavoritenCount[i]}</td><td>${punkte}</td>`;
-            summaryTable.appendChild(row);
-          }
-        }
-
-        function exportExcel() {
-          const data = [["Arbeit", "Anzahl Nennung Favorit", "Anzahl Nennung Topfavorit", "Punkte"]];
-          const rows = summaryTable.querySelectorAll("tr");
-
-          rows.forEach(row => {
-            const cells = row.querySelectorAll("td");
-            if (cells.length === 4) {
-              data.push([
-                cells[0].innerText,
-                cells[1].innerText,
-                cells[2].innerText,
-                cells[3].innerText
-              ]);
-            }
-          });
-
-          const worksheet = XLSX.utils.aoa_to_sheet(data);
-          const workbook = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(workbook, worksheet, "Auswertung");
-
-          XLSX.writeFile(workbook, "auswertung.xlsx");
-        }
-
-        document.getElementById("adminToggle").addEventListener("click", () => {
-          adminPanel.style.display = adminPanel.style.display === "none" ? "block" : "none";
-        });
-
-        submitBtn.addEventListener("click", submitVote);
-
-        if (localStorage.getItem("votingActive") === "false") {
-          votingActive = false;
-        }
-
-        if (localStorage.getItem("hasVoted") === "true") {
-          disableVoting();
-        }
-
-        if (localStorage.getItem("darkMode") === "true") {
-          document.body.classList.add("dark-mode");
-        }
-
-        createButtons();
-        updateInfo();
-        renderSummary();
-    </script>
+   
 </body>
 </html>
